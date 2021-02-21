@@ -15,13 +15,20 @@ class LineSegment{
 		this.x2 = x2;
 		this.y2 = y2;
 	}
-
 }
 
 class Line {
 	constructor(k,n){
 		this.k = k;
 		this.n = n;
+	}
+
+	setK(k){
+		this.k = k;
+	}
+
+	setN(n){
+		this.n=n;
 	}
 }
 
@@ -30,8 +37,15 @@ class Point{
 		this.x = x;
 		this.y = y;
 	}
-}
 
+	setX(x){
+		this.x=x;
+	}
+
+	setY(y){
+		this.y=y;
+	}
+}
 
 //Coordinate System with elements.
 class CoordinateSystem {
@@ -39,6 +53,7 @@ class CoordinateSystem {
 		this.canvas = canvas;
 
 		this.scaleFont = "12px Arial";
+		this.minScale = 20;
 
 		this.center = {x: canvas.width/2, y:canvas.height/2};
 
@@ -47,17 +62,18 @@ class CoordinateSystem {
 		this.points = [];
 		this.functions = [];
 
-		this.xScale = 40;
-		this.yScale = 40;
+		this.xScale = 80;
+		this.yScale = 80;
 
 		this.mousePressed = false;
 		this.mousePanStartX = 0;
 		this.mousePanStartY = 0;
+		this.pannable = true;
 
 		var self = this;
 		this.canvas.addEventListener("mousedown",
 			function(e) {
-    			self.drawPointOnClick(e)});
+    			self.startPanning(e)});
 		this.canvas.addEventListener("mouseup",
 			function(e) {
     			self.mousePressed = false;});
@@ -67,36 +83,49 @@ class CoordinateSystem {
 		this.canvas.addEventListener("mousemove",
 			function(e) {
     			self.pan(e)});
-
 	}
 
-	drawPointOnClick(e) {
-		const rect = e.target.getBoundingClientRect()
-   		const x = e.clientX - rect.left
-    	const y = e.clientY - rect.top
-    	//this.addPoint((x-this.center.x)/this.xScale, -(y-this.center.y)/this.yScale)
+	convertCanvasXToCoordinateX(canvasX){
+		return (canvasX - this.center.x)/this.xScale;
+	}
 
-    	//var segment = self.lineSegments[0];
-    	//segment.setEndPoint((x-self.center.x)/self.xScale,-(y-self.center.y)/self.yScale)
-    	//this.draw();
+	convertCanvasYToCoordinateY(canvasY){
+		return -(canvasY - this.center.y)/this.yScale;
+	}
 
+	convertCoordinateXToCanvasX(x){
+		return x * this.xScale + this.center.x;
+	}
+
+	convertCoordinateYToCanvasY(y){
+		return -y * this.yScale + this.center.y;
+	}
+
+	startPanning(e) {
+		const rect = e.target.getBoundingClientRect();
+   		const x = e.clientX - rect.left;
+    	const y = e.clientY - rect.top;
     	this.mousePressed = true;
     	this.mousePanStartX = x;
     	this.mousePanStartY = y;
 	}
 
+	setPannable(boolean){
+		this.pannable = boolean;
+	}
+
 	zoom(e){
 		e.preventDefault();
-		this.xScale += -e.deltaY * 0.5;
-		this.yScale += -e.deltaY * 0.5; // if i create getters and setters for this class i can have max/min checks there
+		this.xScale = Math.max(this.xScale-e.deltaY * 0.5, this.minScale);
+		this.yScale = Math.max(this.yScale-e.deltaY * 0.5, this.minScale);
 		this.draw();
 	}
 
 	pan(e){
-		if(this.mousePressed){
-			const rect = e.target.getBoundingClientRect()
-   			const x = e.clientX - rect.left
-    		const y = e.clientY - rect.top
+		if(this.mousePressed && this.pannable){
+			const rect = e.target.getBoundingClientRect();
+   			const x = e.clientX - rect.left;
+    		const y = e.clientY - rect.top;
     		var xdelta = x - this.mousePanStartX;
     		var ydelta = y - this.mousePanStartY;
 			this.center.x +=xdelta;
@@ -127,7 +156,7 @@ class CoordinateSystem {
 		ctx.beginPath();
 		ctx.moveTo(this.center.x, 0);
 		ctx.lineTo(this.center.x, canvas.height);
-		ctx.moveTo(0,  this.center.y);
+		ctx.moveTo(0, this.center.y);
 		ctx.lineTo(canvas.width, this.center.y);
 		ctx.closePath();
 		ctx.stroke();
@@ -137,20 +166,19 @@ class CoordinateSystem {
 		const canvas = this.canvas;
 		const ctx = this.canvas.getContext('2d');
 		//left
-		var x = this.center.x-this.xScale;
+		var x = this.center.x - this.xScale;
 		var c = 1;
 		while(x > 0){
 			ctx.beginPath();
 			ctx.moveTo(x, this.center.y+5);
 			ctx.lineTo(x,  this.center.y-5);
 			ctx.font = this.scaleFont;
-			ctx.fillText(-c, x - 8, this.center.y+20); 
+			ctx.fillText(-c, x - 8, this.center.y+20);
 			ctx.closePath();
 			ctx.stroke();
 			x-=this.xScale;
 			c+=1;
 		}
-
 		c = 1;
 		var x = this.center.x + this.xScale;
 		while(x < canvas.width){
@@ -158,7 +186,7 @@ class CoordinateSystem {
 			ctx.moveTo(x, this.center.y+5);
 			ctx.lineTo(x, this.center.y-5);
 			ctx.font = this.scaleFont;
-			ctx.fillText(c, x -4, this.center.y+20); 
+			ctx.fillText(c, x -4, this.center.y+20);
 			ctx.closePath();
 			ctx.stroke();
 			c+=1;
@@ -171,7 +199,7 @@ class CoordinateSystem {
 			ctx.moveTo(this.center.x+5, y);
 			ctx.lineTo(this.center.x-5, y);
 			ctx.font = this.scaleFont;
-			ctx.fillText(c, this.center.x + 8, y+4); 
+			ctx.fillText(c, this.center.x + 8, y+4);
 			ctx.closePath();
 			ctx.stroke();
 			c+=1;
@@ -184,7 +212,7 @@ class CoordinateSystem {
 			ctx.moveTo(this.center.x+5, y);
 			ctx.lineTo(this.center.x-5, y);
 			ctx.font = this.scaleFont;
-			ctx.fillText(-c, this.center.x + 8, y+4); 
+			ctx.fillText(-c, this.center.x + 8, y+4);
 			ctx.closePath();
 			ctx.stroke();
 			c+=1;
@@ -194,15 +222,14 @@ class CoordinateSystem {
 
 	drawFunction(fx) {
 		var x,y,i,j,step;
-		const canvas = this.canvas;
 		const ctx = this.canvas.getContext('2d');
 		step = 5;
 		ctx.beginPath();
 		var notStarted = true;
 		for(i = 0; i < this.canvas.width; i+=step){
-			x = (i-this.center.x)/this.xScale;
-			y = -fx(x); // canvas is upside down
-			j = y*this.yScale + this.center.y;
+			x = this.convertCanvasXToCoordinateX(i);
+			y = fx(x);
+			j = this.convertCoordinateYToCanvasY(y);
 			if(notStarted){
 				ctx.moveTo(i,j);
 				notStarted = false;
@@ -213,24 +240,13 @@ class CoordinateSystem {
 		};
 		ctx.stroke();
 	}
-	
+
 	drawLineSegment(lineSegment){
-		var y1 = -lineSegment.y1;
-		var y2 = -lineSegment.y2;
-		var x1 = lineSegment.x1;
-		var x2 = lineSegment.x2;
+		var x1 = this.convertCoordinateXToCanvasX(lineSegment.x1);
+		var y1 = this.convertCoordinateYToCanvasY(lineSegment.y1);
 
-		x1*=this.xScale
-		x1+=this.center.x
-
-		y1*=this.yScale
-		y1+=this.center.y
-
-		x2*=this.xScale
-		x2+=this.center.x
-
-		y2*=this.yScale
-		y2+=this.center.y
+		var x2 = this.convertCoordinateXToCanvasX(lineSegment.x2);
+		var y2 = this.convertCoordinateYToCanvasY(lineSegment.y2);
 
 		const ctx = this.canvas.getContext('2d');
 		ctx.beginPath();
@@ -241,32 +257,30 @@ class CoordinateSystem {
 	}
 
 	drawLine(line){
-		var n = this.yScale*line.n - this.center.y;
-		var k = line.k*this.yScale/this.xScale;
+		var x1 = this.convertCanvasXToCoordinateX(this.canvas.width);
+		var x2 = this.convertCanvasXToCoordinateX(0);
 
+		var y1 = line.k*x1 + line.n;
+		var y2 = line.k*x2 + line.n;
 
 		const ctx = this.canvas.getContext('2d');
 		ctx.beginPath();
-		var h = this.canvas.width - this.center.x;
-		ctx.moveTo(this.canvas.width, -(n + k*h));
-
-		var h = -this.center.x;
-		ctx.lineTo(0, -(n + k*h));
+		ctx.moveTo(this.canvas.width, this.convertCoordinateYToCanvasY(y1));
+		ctx.lineTo(0, this.convertCoordinateYToCanvasY(y2));
 		ctx.closePath();
 		ctx.stroke();
 	}
 
 	drawPoint(point) {
 		const ctx = this.canvas.getContext('2d');
-		var x = this.center.x + point.x*this.xScale;
-		var y = this.center.y + -point.y*this.yScale;
+		var x = this.convertCoordinateXToCanvasX(point.x);
+		var y = this.convertCoordinateYToCanvasY(point.y);
 		var b4 = ctx.strokeStyle;
 		ctx.beginPath();
 		ctx.strokeStyle = "#FF0000";
   		ctx.arc(x, y, 3, 0, 2 * Math.PI, true);
   		ctx.stroke();
 		ctx.strokeStyle = b4;
-
 	}
 
 	addLineSegment(x1,y1,x2,y2){
@@ -280,23 +294,28 @@ class CoordinateSystem {
 	}
 
 	addLine(k,n){
-		this.lines.push(new Line(k,n));
+		var line = new Line(k,n);
+		this.lines.push(line);
+		return line;
 	}
 
 	addPoint(x,y){
-		this.points.push(new Point(x,y));
+		var point = new Point(x,y);
+		this.points.push(point);
+		return point;
 	}
 
 	addFunction(fx){
 		this.functions.push(fx)
+		return fx;
 	}
 
 	addLineThroughPoints(x1,y1,x2,y2){
 		var k = (y2-y1)/(x2-x1);
 		var n = y1-k*x1;
-		this.points.push(new Point(x1,y1));
-		this.points.push(new Point(x2,y2));
-		this.lines.push(new Line(k,n));
+		var line = new Line(k,n);
+		this.lines.push(line);
+		return line;
 	}
 
 	draw(){
@@ -316,39 +335,138 @@ class CoordinateSystem {
 	}
 }
 
-var h = 0.2;
-var fx = (x=> Math.sin(x))
-var x = 1;
-var chartuu;
+class DerivativesGraph {
+	constructor(canvas){
+		this.coordinateSystem = new CoordinateSystem(canvas);
+		this.x = 1;
+		this.h = 0.2;
+		this.fx = (x => Math.sin(x));
+
+		var x1 = this.x;
+		var x2 = this.x + this.h;
+		var y1 = this.fx(x1);
+		var y2 = this.fx(x2);
+
+		this.line = this.coordinateSystem.addLineThroughPoints(x1,y1,x2,y2);
+		this.startPoint = this.coordinateSystem.addPoint(x1,y1);
+		this.movablePoint = new MovablePoint(this.coordinateSystem, this.startPoint);
+
+		var self = this;
+		this.movablePoint.addCallBack((point => self.setX(point.x)));
+
+		this.endPoint = this.coordinateSystem.addPoint(x2,y2);
+		this.fn = this.coordinateSystem.addFunction(this.fx)
+
+		this.coordinateSystem.setPannable(false);
+		this.coordinateSystem.draw();
+	}
+
+	setH(val){
+		this.h = val
+		this.draw();
+	}
+
+	setX(val){
+		this.x = val;
+		this.draw();
+	}
+
+	draw(){
+		var x1 = this.x;
+		var x2 = this.x + this.h;
+		var y1 = this.fx(x1);
+		var y2 = this.fx(x2);
+
+		this.startPoint.setX(x1);
+		this.startPoint.setY(y1);
+
+		this.endPoint.setX(x2);
+		this.endPoint.setY(y2);
+
+		var k = (y2-y1)/(x2-x1);
+		var n = y1-k*x1;
+
+		this.line.setK(k);
+		this.line.setN(n);
+
+		this.coordinateSystem.draw();
+	}
+}
+
+class MovablePoint{
+	constructor(coordinateSystem, point){
+		this.coordinateSystem = coordinateSystem;
+		this.point = point;
+
+		this.mousePressed = false;
+		this.pointSelected = false;
+		this.moving = false;
+
+		this.callBacks = [];
+		
+		var self = this;
+		this.coordinateSystem.canvas.addEventListener("mousedown",
+			function(e) {
+    			self.mousePress(e)});
+		this.coordinateSystem.canvas.addEventListener("mouseup",
+			function(e) {
+    			self.mousePressed = false;
+    			self.moving = false;});
+		this.coordinateSystem.canvas.addEventListener("mousemove",
+			function(e) {
+    			self.mouseMove(e)});
+	}
+
+	distance(x,y){ // x and y are canvas coordinates
+		var canvasX = this.coordinateSystem.convertCoordinateXToCanvasX(this.point.x);
+		var canvasY = this.coordinateSystem.convertCoordinateYToCanvasY(this.point.y);
+		return Math.sqrt((x-canvasX)**2 + (y-canvasY)**2);
+	}
+
+	mousePress(e){
+    	this.mousePressed = true;
+		const rect = e.target.getBoundingClientRect();
+   		const x = e.clientX - rect.left;
+    	const y = e.clientY - rect.top;
+		if(this.distance(x,y) < 20){
+    		this.moving = true;
+		}
+	}
+
+	mouseMove(e){
+		if(this.moving){
+			const rect = e.target.getBoundingClientRect();
+   			const x = e.clientX - rect.left;
+    		const y = e.clientY - rect.top;
+
+    		this.point.setX(this.coordinateSystem.convertCanvasXToCoordinateX(x));
+    		this.point.setY(this.coordinateSystem.convertCanvasYToCoordinateY(y));
+
+    		this.update();
+		}
+	}
+
+	addCallBack(callBack){
+		this.callBacks.push(callBack);
+	}
+
+	update(){
+		this.callBacks.forEach(callback => callback(this.point)); // point has moved callback
+	}
+}
+
+
+var graph;
 
 function setH(val){
-	h = val/100;
-	chartuu.points.pop();
-	chartuu.points.pop();
-	chartuu.lines.pop();
-	chartuu.addLineThroughPoints(x,fx(x), x+h,fx(x+h));
-	chartuu.draw();
+	val = val/100;
+	graph.setH(val);
 }
 
 function setX(val){
-	x = val-chartuu.center.x;
-	x = x/chartuu.xScale;
-	chartuu.points.pop();
-	chartuu.points.pop();
-	chartuu.lines.pop();
-	chartuu.addLineThroughPoints(x,fx(x), x+h,fx(x+h));
-	chartuu.draw();
+	graph.setX(val);
 }
 
-function initial(canvas){
-	chartuu = new CoordinateSystem(canvas);
-	//chartuu.addLineSegmentWithEndpoints(-3,-3,5,3);
-	//chartuu.addLineSegment(-6,-3,1,4);
-	//chartuu.addLine(2,-2);
-	//chartuu.addPoint(2,1);
-	chartuu.addFunction(fx)
-	chartuu.addLineThroughPoints(x,fx(x), x+h,fx(x+h));
-	chartuu.draw();
-	setH(100);
+function initializeDerivativesGraph(canvas){
+	 graph = new DerivativesGraph(canvas);
 }
-

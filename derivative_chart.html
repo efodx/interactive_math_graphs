@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-
+<script src="script.js"> </script>
 
 <style>
 body {
@@ -16,16 +16,13 @@ body {
 <body>
 
 <h1>Interactive chart for derivatives</h1>
+
 <canvas id="my-chart" width="1300" height="700"></canvas>
-<script src="script.js"> </script>
 
 <input type="range" min="1" max="200" value="100", oninput="setH(this.value)">
 
-<input type="range" min="0" max="1300" value="1", oninput="setX(this.value)">
-
 <script>
-initial(document.getElementById('my-chart'));
-chartuu.draw()
+initializeDerivativesGraph(document.getElementById('my-chart'));
 </script>
 
 
