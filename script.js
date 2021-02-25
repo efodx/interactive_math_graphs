@@ -411,7 +411,8 @@ class MovablePoint{
 		this.coordinateSystem.canvas.addEventListener("mouseup",
 			function(e) {
     			self.mousePressed = false;
-    			self.moving = false;});
+    			self.moving = false;
+				self.coordinateSystem.canvas.style.cursor="default";});
 		this.coordinateSystem.canvas.addEventListener("mousemove",
 			function(e) {
     			self.mouseMove(e)});
@@ -434,6 +435,16 @@ class MovablePoint{
 	}
 
 	mouseMove(e){
+		const rect = e.target.getBoundingClientRect();
+   		const x = e.clientX - rect.left;
+    	const y = e.clientY - rect.top;
+		if(this.distance(x,y) < 20){
+			this.coordinateSystem.canvas.style.cursor="w-resize";              
+		}else{
+			if(!this.moving){
+				this.coordinateSystem.canvas.style.cursor="default";
+			}
+		}
 		if(this.moving){
 			const rect = e.target.getBoundingClientRect();
    			const x = e.clientX - rect.left;
