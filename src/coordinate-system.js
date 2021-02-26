@@ -118,8 +118,27 @@ class CoordinateSystem {
 
 	zoom(e){
 		e.preventDefault();
-		this.xScale = Math.max(this.xScale-e.deltaY * 0.5, this.minScale);
-		this.yScale = Math.max(this.yScale-e.deltaY * 0.5, this.minScale);
+		var oldScaleX = this.xScale;
+		var oldScaleY = this.yScale;
+		
+		this.xScale = Math.max(this.xScale-e.deltaY * 2, this.minScale);
+		this.yScale = Math.max(this.yScale-e.deltaY * 2, this.minScale);
+		
+		var scaleDeltaX = this.xScale - oldScaleX;
+		var scaleDeltaY = this.yScale - oldScaleY;
+		
+		const rect = e.target.getBoundingClientRect();
+   		const x = e.clientX - rect.left;
+    	const y = e.clientY - rect.top;
+		var norma = Math.sqrt(((x - this.center.x)/this.xScale)**2 + ((y-this.center.y)/this.yScale)**2)
+		console.log(norma)
+		
+    	var xdelta = (x - this.center.x)/norma*scaleDeltaX/this.xScale*Math.abs(this.convertCanvasXToCoordinateX(x));
+    	var ydelta = (y - this.center.y)/norma*scaleDeltaY/this.yScale*Math.abs(this.convertCanvasYToCoordinateY(y));
+		
+		this.center.x -=xdelta;
+		this.center.y -=ydelta;
+		
 		this.draw();
 	}
 

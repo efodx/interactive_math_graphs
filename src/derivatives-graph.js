@@ -23,7 +23,7 @@ class DerivativesGraph {
 		this.endPoint = this.coordinateSystem.addPoint(x2,y2);
 		this.fn = this.coordinateSystem.addFunction(this.fx)
 
-		this.coordinateSystem.setPannable(false);
+		this.coordinateSystem.setPannable(true);
 		this.coordinateSystem.draw();
 	}
 
@@ -80,7 +80,8 @@ class MovablePoint{
 			function(e) {
     			self.mousePressed = false;
     			self.moving = false;
-				self.coordinateSystem.canvas.style.cursor="default";});
+				self.coordinateSystem.canvas.style.cursor="default";
+				self.coordinateSystem.setPannable(true)});
 		this.coordinateSystem.canvas.addEventListener("mousemove",
 			function(e) {
     			self.mouseMove(e)});
@@ -99,6 +100,7 @@ class MovablePoint{
     	const y = e.clientY - rect.top;
 		if(this.distance(x,y) < 20){
     		this.moving = true;
+			this.coordinateSystem.setPannable(false)
 		}
 	}
 
