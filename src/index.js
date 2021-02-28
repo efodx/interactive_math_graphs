@@ -1,29 +1,17 @@
-import {DerivativesGraph} from './derivatives-graph.js';
+import React from 'react'
+import ReactDOM from 'react-dom'
+import './index.css'
+import App from './App'
+// import reportWebVitals from './reportWebVitals';
 
-var graph;
+ReactDOM.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+  document.getElementById('root')
+)
 
-function initializeDerivativesGraph(canvas){
-	 graph = new DerivativesGraph(canvas);
-}
-
-const newDiv = document.createElement("div");
-document.body.appendChild(newDiv);
-var x = document.createElement("canvas"); 
-var range = document.createElement("input");
-range.setAttribute("type", "range");
-range.setAttribute("value", 1);
-range.setAttribute("min", 0.01);
-range.setAttribute("max", 2);
-range.setAttribute("step", 0.01);
-range.addEventListener('input', function () {graph.setH(Number(range.value))})
-
-x.width = 1300
-x.height = 800
-newDiv.appendChild(x)
-newDiv.append(range)
-initializeDerivativesGraph(x);
-
-var h_value = document.getElementById("rangevalue");
-var h_range_setter = document.getElementById("h");
-
-
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+// reportWebVitals();

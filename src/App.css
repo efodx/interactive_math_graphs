@@ -1,0 +1,30 @@
+.App {
+  text-align: center;
+}
+
+.App-header {
+  background-color: #285abd;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: rgba(220, 250, 250, 0.897);
+}
+
+.Graph-division {
+  background-color: #5d8ae6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: rgba(252, 252, 252, 0.897);
+  border-style: solid;
+  border-color: #447df0;
+}
+.Canvas {
+  background-color: #ffffff;
+}
