@@ -63,7 +63,7 @@ class CoordinateSystem {
 
     this.scaleFont = '14px Arial'
     this.lineWidth = 0.6
-    this.gridLineWidth = 0.15
+    this.gridLineWidth = 0.10
     this.borderLineWidth = 2
     this.pointLineWidth = 1
     this.minScale = 20
@@ -83,6 +83,8 @@ class CoordinateSystem {
     this.mousePanStartX = 0
     this.mousePanStartY = 0
     this.pannable = true
+    this.mouseStopTimeout = null
+    this.mouseStopped = false
 
     const self = this
     this.canvas.addEventListener('mousedown',
@@ -93,12 +95,22 @@ class CoordinateSystem {
       function (e) {
         self.mousePressed = false
       })
+    this.canvas.addEventListener('mouseout',
+      function (e) {
+        self.mousePressed = false
+        self.mouseStopped = false
+        console.log('mouse out bby')
+        clearTimeout(self.mouseStopTimeout)
+        self.draw()
+      })
     this.canvas.addEventListener('wheel',
       function (e) {
         self.zoom(e)
       })
     this.canvas.addEventListener('mousemove',
       function (e) {
+        clearTimeout(self.mouseStopTimeout)
+        self.mouseStopTimeout = setTimeout(() => self.onMouseStop(e), 500)
         self.pan(e)
       })
     this.canvas.addEventListener('dblclick',
@@ -107,8 +119,32 @@ class CoordinateSystem {
       })
   }
 
+  onMouseStop (e) {
+    this.draw()
+    this.mouseStopped = true
+    const rect = e.target.getBoundingClientRect()
+    const x = e.clientX - rect.left
+    const y = e.clientY - rect.top
+    const ctx = this.canvas.getContext('2d')
+    const tekst = '(' + this.convertCanvasXToCoordinateX(x).toFixed(2) + ', ' + this.convertCanvasYToCoordinateY(y).toFixed(2) + ')'
+    ctx.lineWidth = this.borderLineWidth
+    ctx.beginPath()
+    ctx.setLineDash([5, 10])
+    ctx.moveTo(x, y)
+    ctx.lineTo(x, this.convertCoordinateYToCanvasY(0))
+    ctx.moveTo(x, y)
+    ctx.lineTo(this.convertCoordinateXToCanvasX(0), y)
+    ctx.fillText(tekst, x, y)
+    ctx.arc(x, y, 3, 0, 2 * Math.PI, true)
+    ctx.stroke()
+    const prevStrokeSTyle = ctx.strokeStyle
+    ctx.strokeStyle = '#eb3737'
+    ctx.stroke()
+    ctx.setLineDash([])
+    ctx.strokeStyle = prevStrokeSTyle
+  }
+
   resetZoom () {
-    console.log('double click')
     this.xScale = 80
     this.yScale = 80
     this.draw()
@@ -169,6 +205,10 @@ class CoordinateSystem {
   }
 
   pan (e) {
+    if (this.mouseStopped) {
+      this.mouseStopped = false
+      this.draw()
+    }
     if (this.mousePressed && this.pannable) {
       const rect = e.target.getBoundingClientRect()
       const x = e.clientX - rect.left
@@ -210,145 +250,83 @@ class CoordinateSystem {
   }
 
   drawGrid () {
-    const canvas = this.canvas
     const ctx = this.canvas.getContext('2d')
+
+    const numberOfX = Math.floor(this.canvas.width * 10 / this.xScale)
+    const numberOfY = Math.floor(this.canvas.height * 10 / this.yScale)
+
+    const xStartCoordinate = Math.ceil(this.convertCanvasXToCoordinateX(0))
+    const yStartCoordinate = Math.ceil(this.convertCanvasYToCoordinateY(0))
+
+    const xCanvasStart = this.convertCoordinateXToCanvasX(xStartCoordinate)
+    const yCanvasStart = this.convertCoordinateYToCanvasY(yStartCoordinate)
 
     const beforeAlpha = ctx.globalAlpha
     ctx.globalAlpha = 0.5
-    let x = this.center.x - this.xScale
     ctx.lineWidth = this.gridLineWidth
-    while (x > 0) {
+
+    for (let i = -10; i < numberOfX + 10; i++) {
+      const canvasX = xCanvasStart + i * this.xScale / 10
+      if (i % 10 === 0) {
+        ctx.globalAlpha = 1
+      }
       ctx.beginPath()
-      ctx.moveTo(x, 0)
-      ctx.lineTo(x, canvas.height)
+      ctx.moveTo(canvasX, 0)
+      ctx.lineTo(canvasX, this.canvas.height)
       ctx.closePath()
       ctx.stroke()
-      x -= this.xScale
+      ctx.globalAlpha = 0.5
     }
-    x = this.center.x - this.xScale / 10
-    ctx.lineWidth = this.gridLineWidth / 2
-    while (x > 0) {
-      ctx.beginPath()
-      ctx.moveTo(x, 0)
-      ctx.lineTo(x, canvas.height)
-      ctx.closePath()
-      ctx.stroke()
-      x -= this.xScale / 10
+
+    for (let i = -10; i < numberOfY + 10; i++) {
+      const canvasY = yCanvasStart + i * this.yScale / 10
+      if (yStartCoordinate - i !== 0) {
+        if (i % 10 === 0) {
+          ctx.globalAlpha = 1
+        }
+        ctx.beginPath()
+        ctx.moveTo(0, canvasY)
+        ctx.lineTo(this.canvas.width, canvasY)
+        ctx.closePath()
+        ctx.stroke()
+      }
+      ctx.globalAlpha = 0.5
     }
-    x = this.center.x + this.xScale
-    ctx.lineWidth = this.gridLineWidth
-    while (x < canvas.width) {
-      ctx.beginPath()
-      ctx.moveTo(x, 0)
-      ctx.lineTo(x, this.canvas.height)
-      ctx.closePath()
-      ctx.stroke()
-      x += this.xScale
-    }
-    ctx.lineWidth = this.gridLineWidth / 2
-    x = this.center.x + this.xScale / 10
-    while (x < canvas.width) {
-      ctx.beginPath()
-      ctx.moveTo(x, 0)
-      ctx.lineTo(x, this.canvas.height)
-      ctx.closePath()
-      ctx.stroke()
-      x += this.xScale / 10
-    }
-    ctx.lineWidth = this.gridLineWidth
-    let y = this.center.y - this.yScale
-    while (y > 0) {
-      ctx.beginPath()
-      ctx.moveTo(0, y)
-      ctx.lineTo(this.canvas.width, y)
-      ctx.closePath()
-      ctx.stroke()
-      y -= this.yScale
-    }
-    ctx.lineWidth = this.gridLineWidth / 2
-    y = this.center.y - this.yScale / 10
-    while (y > 0) {
-      ctx.beginPath()
-      ctx.moveTo(0, y)
-      ctx.lineTo(this.canvas.width, y)
-      ctx.closePath()
-      ctx.stroke()
-      y -= this.yScale / 10
-    }
-    ctx.lineWidth = this.gridLineWidth
-    y = this.center.y + this.yScale
-    while (y < canvas.height) {
-      ctx.beginPath()
-      ctx.moveTo(0, y)
-      ctx.lineTo(this.canvas.width, y)
-      ctx.closePath()
-      ctx.stroke()
-      y += this.yScale
-    }
-    ctx.lineWidth = this.gridLineWidth / 2
-    y = this.center.y + this.yScale / 10
-    while (y < canvas.height) {
-      ctx.beginPath()
-      ctx.moveTo(0, y)
-      ctx.lineTo(this.canvas.width, y)
-      ctx.closePath()
-      ctx.stroke()
-      y += this.yScale / 10
-    }
+
     ctx.globalAlpha = beforeAlpha
   }
 
   drawScale () {
-    const canvas = this.canvas
     const ctx = this.canvas.getContext('2d')
-    // left
-    let x = this.center.x - this.xScale
-    let c = 1
-    while (x > 0) {
+
+    const numberOfX = Math.floor(this.canvas.width / this.xScale)
+    const numberOfY = Math.floor(this.canvas.height / this.yScale)
+
+    const xStartCoordinate = Math.ceil(this.convertCanvasXToCoordinateX(0))
+    const yStartCoordinate = Math.ceil(this.convertCanvasYToCoordinateY(0))
+
+    const xCanvasStart = this.convertCoordinateXToCanvasX(xStartCoordinate)
+    const yCanvasStart = this.convertCoordinateYToCanvasY(yStartCoordinate)
+    ctx.font = this.scaleFont
+    for (let i = 0; i <= numberOfX; i++) {
       ctx.beginPath()
-      ctx.moveTo(x, this.center.y + 5)
-      ctx.lineTo(x, this.center.y - 5)
-      ctx.fillText(-c, x - 8, this.center.y + 20)
+      ctx.moveTo(xCanvasStart + i * this.xScale, this.center.y + 5)
+      ctx.lineTo(xCanvasStart + i * this.xScale, this.center.y - 5)
+      ctx.fillText(xStartCoordinate + i, xCanvasStart + i * this.xScale - 8, this.center.y + 20)
       ctx.closePath()
       ctx.stroke()
-      x -= this.xScale
-      c += 1
     }
-    c = 1
-    x = this.center.x + this.xScale
-    while (x < canvas.width) {
-      ctx.beginPath()
-      ctx.moveTo(x, this.center.y + 5)
-      ctx.lineTo(x, this.center.y - 5)
-      ctx.fillText(c, x - 4, this.center.y + 20)
-      ctx.closePath()
-      ctx.stroke()
-      c += 1
-      x += this.xScale
-    }
-    c = 1
-    let y = this.center.y - this.yScale
-    while (y > 0) {
-      ctx.beginPath()
-      ctx.moveTo(this.center.x + 5, y)
-      ctx.lineTo(this.center.x - 5, y)
-      ctx.fillText(c, this.center.x + 8, y + 4)
-      ctx.closePath()
-      ctx.stroke()
-      c += 1
-      y -= this.yScale
-    }
-    c = 1
-    y = this.center.y + this.yScale
-    while (y < canvas.height) {
-      ctx.beginPath()
-      ctx.moveTo(this.center.x + 5, y)
-      ctx.lineTo(this.center.x - 5, y)
-      ctx.fillText(-c, this.center.x + 8, y + 4)
-      ctx.closePath()
-      ctx.stroke()
-      c += 1
-      y += this.yScale
+
+    for (let i = 0; i <= numberOfY; i++) {
+      const canvasY = yCanvasStart + i * this.yScale
+      if (yStartCoordinate - i !== 0) {
+        ctx.beginPath()
+        ctx.moveTo(this.center.x + 5, canvasY)
+        ctx.lineTo(this.center.x - 5, canvasY)
+        ctx.fillText(yStartCoordinate - i, this.center.x + 10, canvasY)
+        ctx.closePath()
+        ctx.stroke()
+      }
     }
   }
 

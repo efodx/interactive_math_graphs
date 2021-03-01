@@ -15,7 +15,7 @@ class IntegralGraphREACT extends React.Component {
   render () {
     return <div>
        <div><canvas className="Canvas" ref={(c => { this.canvas = c })} {...this.props}/></div>
-       <Hinput onChange={(number => this.setNumberOfRectangles(number))} min={3} max = {50} start={10} step={1}></Hinput>
+       <Hinput onChange={(number => this.setNumberOfRectangles(number))} min={3} max = {150} start={10} step={1}></Hinput>
       </div>
   }
 }

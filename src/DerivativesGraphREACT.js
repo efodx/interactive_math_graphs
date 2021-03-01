@@ -1,7 +1,7 @@
 import React from 'react'
 
-import { DerivativesGraph } from './graphs/derivatives-graph.js'
-import { Hinput } from './reactinputs/Hinput'
+import { DerivativesGraph } from './graphs/derivatives-graph'
+import { Hinput as ValueRangeInput } from './reactinputs/Hinput'
 
 class DerivateGraphREACT extends React.Component {
   componentDidMount () {
@@ -15,7 +15,7 @@ class DerivateGraphREACT extends React.Component {
   render () {
     return <div>
        <div><canvas className="Canvas" ref={(c => { this.canvas = c })} {...this.props}/></div>
-       <Hinput onChange={(number => this.setH(number))}></Hinput>
+       <ValueRangeInput onChange={(number => this.setH(number))}></ValueRangeInput>
       </div>
   }
 }

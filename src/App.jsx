@@ -1,7 +1,7 @@
 import './App.css'
-import DerivateGraphREACT from './DerivativesGraphREACT.js'
-import IntegralGraphREACT from './IntegralGraphREACT.js'
-import LineGraphREACT from './LineaGraphReact.js'
+import DerivateGraphREACT from './DerivativesGraphREACT'
+import IntegralGraphREACT from './IntegralGraphREACT'
+import LineGraphREACT from './LineaGraphReact'
 
 function App () {
   return (
